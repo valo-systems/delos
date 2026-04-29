@@ -7,7 +7,6 @@ import StickyActions from "@/components/StickyActions";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Button from "@/components/ui/Button";
 import { RestaurantStructuredData } from "@/components/StructuredData";
-import BrandLogo from "@/components/brand/BrandLogo";
 import BrandSeal from "@/components/brand/BrandSeal";
 import Reviews from "@/components/Reviews";
 import Reveal from "@/components/Reveal";
@@ -94,19 +93,9 @@ export default function HomePage() {
             aria-hidden="true"
           />
           <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-            <div
-              className="flex justify-center mb-6 hero-fade"
-              style={{ "--delay": "0ms" } as CSSProperties}
-            >
-              <BrandLogo
-                variant="wordmark"
-                height={72}
-                className="h-12 sm:h-14 md:h-16 lg:h-[72px] w-auto"
-              />
-            </div>
             <p
               className="text-xs tracking-[0.4em] text-gold uppercase mb-6 hero-fade"
-              style={{ "--delay": "120ms" } as CSSProperties}
+              style={{ "--delay": "0ms" } as CSSProperties}
             >
               Morningside, Durban
             </p>

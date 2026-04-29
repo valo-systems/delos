@@ -1,31 +1,67 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Menu, X, Phone } from "@/components/icons";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X, ChevronDown } from "@/components/icons";
 import BrandLogo from "@/components/brand/BrandLogo";
 import { siteConfig } from "@/lib/siteConfig";
 
-const navLinks = [
+const primaryLinks = [
   { label: "Menu", href: "/menu" },
-  { label: "Order", href: "/order" },
+  { label: "Book", href: "/bookings" },
+  { label: "Events", href: "/events" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Visit", href: "/contact" },
+];
+
+const moreLinks = [
+  { label: "Order Online", href: "/order" },
+  { label: "Shisanyama", href: "/shisanyama-morningside" },
+  { label: "Private Functions", href: "/private-functions" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+const mobileLinks = [
+  { label: "Menu", href: "/menu" },
+  { label: "Book", href: "/bookings" },
+  { label: "Order Online", href: "/order" },
   { label: "Shisanyama", href: "/shisanyama-morningside" },
   { label: "Events", href: "/events" },
   { label: "Private Functions", href: "/private-functions" },
   { label: "Gallery", href: "/gallery" },
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+  { label: "Visit / Contact", href: "/contact" },
 ];
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const moreRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close More dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    }
+    if (moreOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [moreOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
   return (
     <header
@@ -36,13 +72,12 @@ export default function Navigation() {
       }`}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo: lion icon on small screens (legible at tiny size),
-              full wordmark from sm+. Both link to /. */}
+        <div className="flex items-center h-20 gap-12">
+          {/* Logo */}
           <Link
             href="/"
             aria-label={`${siteConfig.name}. Home`}
-            className="flex items-center group"
+            className="flex items-center shrink-0 group"
           >
             <span className="sm:hidden">
               <BrandLogo variant="lion" height={36} priority />
@@ -57,9 +92,9 @@ export default function Navigation() {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <ul className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
+          {/* Desktop primary nav — gap-12 on the flex parent already gives logo breathing room */}
+          <ul className="hidden lg:flex items-center gap-7 flex-1">
+            {primaryLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
@@ -69,17 +104,45 @@ export default function Navigation() {
                 </Link>
               </li>
             ))}
+
+            {/* More dropdown */}
+            <li className="relative" ref={moreRef}>
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+                className="flex items-center gap-1 text-sm tracking-wider text-cream/80 hover:text-gold uppercase transition-colors"
+              >
+                More
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {moreOpen && (
+                <div
+                  className="absolute top-full left-0 mt-3 w-52 bg-black/98 border border-gold/20 shadow-xl shadow-black/60 backdrop-blur-md"
+                  role="menu"
+                >
+                  {moreLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      role="menuitem"
+                      onClick={() => setMoreOpen(false)}
+                      className="block px-5 py-3 text-sm tracking-wider text-cream/75 hover:text-gold hover:bg-gold/5 uppercase transition-colors border-b border-white/5 last:border-0"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </li>
           </ul>
 
-          {/* CTA */}
-          <div className="hidden lg:flex items-center gap-4">
-            <a
-              href={`tel:${siteConfig.contact.phone}`}
-              className="flex items-center gap-2 text-sm text-cream/70 hover:text-gold transition-colors"
-            >
-              <Phone size={14} />
-              {siteConfig.contact.phone}
-            </a>
+          {/* Desktop CTA */}
+          <div className="hidden lg:block shrink-0 ml-auto">
             <Link
               href="/bookings"
               className="px-5 py-2 border border-gold text-gold text-sm tracking-widest uppercase hover:bg-gold hover:text-black transition-all"
@@ -88,11 +151,12 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile toggle */}
           <button
-            className="lg:hidden text-cream hover:text-gold transition-colors p-2"
+            className="lg:hidden ml-auto text-cream hover:text-gold transition-colors p-2"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle menu"
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -101,34 +165,25 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="lg:hidden bg-black/98 backdrop-blur-md border-t border-gold/20">
-          <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col gap-4">
-            {navLinks.map((link) => (
+        <div className="lg:hidden bg-black/98 backdrop-blur-md border-t border-gold/20 max-h-[calc(100vh-5rem)] overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col">
+            {mobileLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="text-base tracking-wider text-cream/80 hover:text-gold uppercase transition-colors py-2 border-b border-white/5"
+                className="text-base tracking-wider text-cream/80 hover:text-gold uppercase transition-colors py-3.5 border-b border-white/5"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex flex-col gap-3 mt-4">
-              <a
-                href={`tel:${siteConfig.contact.phone}`}
-                className="flex items-center gap-2 text-cream/70 hover:text-gold transition-colors"
-              >
-                <Phone size={16} />
-                {siteConfig.contact.phone}
-              </a>
-              <Link
-                href="/bookings"
-                onClick={() => setIsOpen(false)}
-                className="w-full text-center px-5 py-3 border border-gold text-gold text-sm tracking-widest uppercase hover:bg-gold hover:text-black transition-all"
-              >
-                Book a Table
-              </Link>
-            </div>
+            <Link
+              href="/bookings"
+              onClick={() => setIsOpen(false)}
+              className="mt-6 w-full text-center px-5 py-3.5 border border-gold text-gold text-sm tracking-widest uppercase hover:bg-gold hover:text-black transition-all"
+            >
+              Book a Table
+            </Link>
           </div>
         </div>
       )}

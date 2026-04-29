@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { store, generateId } from "@/lib/store";
 import type { Reservation } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
 type CreateReservationBody = {
   name?: string;

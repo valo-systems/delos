@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { store } from "@/lib/store";
 import type { ReservationStatus } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export function generateStaticParams() { return []; }
 
 const ALLOWED: ReservationStatus[] = [
   "pending",

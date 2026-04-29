@@ -9,7 +9,7 @@ import type {
   OrderStatus,
 } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
 type IncomingItem = {
   menuItemId: string;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, MapPin, Clock, Phone } from "@/components/icons";
+import { ArrowRight, MapPin, Clock, Phone, GrillFlame, ServingBowl, CocktailGlass, Sparkle } from "@/components/icons";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StickyActions from "@/components/StickyActions";
@@ -24,25 +24,25 @@ export const metadata: Metadata = {
 
 const highlights = [
   {
-    icon: "🔥",
+    Icon: GrillFlame,
     title: "Shisanyama",
     desc: "Open-flame grilled meats. Boerewors, lamb chops, chicken. Done the right way.",
     href: "/shisanyama-morningside",
   },
   {
-    icon: "🍲",
+    Icon: ServingBowl,
     title: "Traditional Food",
     desc: "Slow-cooked oxtail, lamb curry, umgxabhiso, usu nethumbu and more.",
     href: "/traditional-food-durban",
   },
   {
-    icon: "🍸",
+    Icon: CocktailGlass,
     title: "Cocktail Lounge",
     desc: "Signature cocktails, craft spirits, and a full bar in a premium lounge setting.",
     href: "/cocktail-lounge-durban",
   },
   {
-    icon: "🎉",
+    Icon: Sparkle,
     title: "Events & Functions",
     desc: "Birthdays, corporates, group bookings. We make every occasion unforgettable.",
     href: "/private-functions",
@@ -166,26 +166,40 @@ export default function HomePage() {
               />
             </Reveal>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {highlights.map((item, idx) => (
-                <Reveal key={item.title} delay={idx * 90}>
-                  <Link
-                    href={item.href}
-                    className="hover-lift group p-6 border border-gold/20 hover:border-gold/60 bg-black/30 hover:bg-black/50 block h-full"
-                  >
-                    <span className="text-3xl block mb-4">{item.icon}</span>
-                    <h3
-                      className="text-xl text-cream mb-2 group-hover:text-gold transition-colors"
-                      style={{ fontFamily: "var(--font-serif)" }}
+              {highlights.map((item, idx) => {
+                const Icon = item.Icon;
+                return (
+                  <Reveal key={item.title} delay={idx * 90}>
+                    <Link
+                      href={item.href}
+                      className="group p-8 border border-gold/20 hover:border-gold/40 bg-black/30 hover:bg-charcoal/60 block h-full text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40"
                     >
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-cream/50 leading-relaxed mb-4">{item.desc}</p>
-                    <span className="text-xs text-gold tracking-widest uppercase flex items-center gap-1 group-hover:gap-2 transition-all">
-                      Discover <ArrowRight size={12} />
-                    </span>
-                  </Link>
-                </Reveal>
-              ))}
+                      {/* Icon badge */}
+                      <div
+                        className="mx-auto mb-6 w-14 h-14 rounded-full border border-gold/25 group-hover:border-gold/50 flex items-center justify-center bg-black/50 group-hover:bg-gold/5 transition-all duration-300"
+                        aria-hidden="true"
+                      >
+                        <Icon
+                          size={26}
+                          className="text-gold/60 group-hover:text-gold transition-colors duration-300"
+                        />
+                      </div>
+                      <h3
+                        className="text-xl text-cream mb-3 group-hover:text-gold transition-colors duration-300"
+                        style={{ fontFamily: "var(--font-serif)" }}
+                      >
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-cream/50 leading-relaxed mb-5">
+                        {item.desc}
+                      </p>
+                      <span className="inline-flex items-center justify-center gap-1.5 text-xs text-gold/60 group-hover:text-gold tracking-widest uppercase transition-colors duration-300">
+                        Discover <ArrowRight size={11} />
+                      </span>
+                    </Link>
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </section>

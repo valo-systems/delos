@@ -109,3 +109,39 @@ export const ChevronDown = ({ size = 24, className = "" }: IconProps) => (
     <polyline points="6 9 12 15 18 9" />
   </svg>
 );
+
+// ─── Feature card icons (strokeWidth 1.5 — thinner, more refined) ──────────
+
+export const GrillFlame = ({ size = 24, className = "" }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 2C10 7 6 9 6 13a6 6 0 0012 0c0-4-4-6-6-11z" />
+    <path d="M12 11c-1 1.5-1.5 2.5-1.5 3.5a1.5 1.5 0 003 0c0-1-.5-2-1.5-3.5z" />
+  </svg>
+);
+
+export const ServingBowl = ({ size = 24, className = "" }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M8 7c.4-1 .4-2.5 0-4" />
+    <path d="M12 6V2" />
+    <path d="M16 7c-.4-1-.4-2.5 0-4" />
+    <line x1="3" y1="11" x2="21" y2="11" />
+    <path d="M3 11c0 4.97 4.03 9 9 9s9-4.03 9-9" />
+  </svg>
+);
+
+export const CocktailGlass = ({ size = 24, className = "" }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M5 4l7 8 7-8H5z" />
+    <line x1="12" y1="12" x2="12" y2="19" />
+    <line x1="8" y1="19" x2="16" y2="19" />
+    <circle cx="17" cy="6" r="1" fill="currentColor" strokeWidth="0" opacity="0.6" />
+  </svg>
+);
+
+export const Sparkle = ({ size = 24, className = "" }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+    <path d="M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12" />
+    <circle cx="12" cy="12" r="2.5" />
+  </svg>
+);

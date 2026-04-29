@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StickyActions from "@/components/StickyActions";
@@ -15,7 +14,6 @@ import { useCart, computeTotals } from "@/lib/cart";
 import type { FulfilmentType } from "@/lib/types";
 
 export default function OrderPage() {
-  const router = useRouter();
   const cart = useCart();
 
   const [activeCategory, setActiveCategory] = useState("all");
@@ -30,7 +28,6 @@ export default function OrderPage() {
   const [email, setEmail] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const filtered = menuItems.filter((item) => {
@@ -51,7 +48,7 @@ export default function OrderPage() {
   const minOrder = siteConfig.directOrder.minOrder;
   const belowMinimum = totals.subtotal > 0 && totals.subtotal < minOrder;
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError(null);
 
@@ -64,38 +61,37 @@ export default function OrderPage() {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName,
-          phone,
-          email: email || undefined,
-          fulfilmentType,
-          deliveryAddress:
-            fulfilmentType === "delivery" ? deliveryAddress : undefined,
-          items: cart.items.map((i) => ({
-            menuItemId: i.menuItemId,
-            quantity: i.quantity,
-          })),
-          orderNotes: orderNotes || undefined,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setSubmitError(data?.error ?? "Could not place order.");
-        setSubmitting(false);
-        return;
-      }
-      cart.clear();
-      router.push(`/order/${data.order.id}`);
-    } catch {
-      setSubmitError("Network error. Please try again.");
-      setSubmitting(false);
+    const lines: string[] = [];
+    lines.push("*New Order — Delos Lounge & Dining*");
+    lines.push("");
+    lines.push(`*Name:* ${customerName}`);
+    lines.push(`*Phone:* ${phone}`);
+    if (email) lines.push(`*Email:* ${email}`);
+    lines.push(`*Fulfilment:* ${fulfilmentType === "delivery" ? "Delivery" : "Collection"}`);
+    if (fulfilmentType === "delivery" && deliveryAddress) {
+      lines.push(`*Delivery address:* ${deliveryAddress}`);
     }
+    lines.push("");
+    lines.push("*Items:*");
+    cart.items.forEach((i) => {
+      lines.push(`  ${i.quantity}× ${i.name} — ${formatPrice(i.price * i.quantity)}`);
+    });
+    lines.push("");
+    lines.push(`*Subtotal:* ${formatPrice(totals.subtotal)}`);
+    lines.push(`*Service fee (${siteConfig.directOrder.serviceFeePercent}%):* ${formatPrice(totals.serviceFee)}`);
+    if (fulfilmentType === "delivery") {
+      lines.push(`*Delivery fee:* ${totals.deliveryFee === 0 ? "Free" : formatPrice(totals.deliveryFee)}`);
+    }
+    lines.push(`*Total:* ${formatPrice(totals.total)}`);
+    if (orderNotes) {
+      lines.push("");
+      lines.push(`*Notes:* ${orderNotes}`);
+    }
+
+    const message = encodeURIComponent(lines.join("\n"));
+    const whatsappNumber = siteConfig.contact.whatsapp.replace(/\D/g, "");
+    cart.clear();
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
   }
 
   return (
@@ -533,10 +529,10 @@ export default function OrderPage() {
                 </div>
 
                 <div className="bg-black/50 border border-gold/10 p-4 text-xs text-cream/60 leading-relaxed">
-                  <strong className="text-gold">Payment:</strong> Pay on{" "}
-                  {fulfilmentType === "delivery" ? "delivery" : "collection"}.
-                  Online card payments are coming soon. Our team will confirm
-                  your order on WhatsApp.
+                  <strong className="text-gold">How it works:</strong> Clicking
+                  &ldquo;Place order&rdquo; will open WhatsApp with your full
+                  order pre-filled. Send the message and our team will confirm
+                  and advise on payment.
                 </div>
 
                 {submitError && (
@@ -550,9 +546,8 @@ export default function OrderPage() {
                     type="submit"
                     variant="primary"
                     size="lg"
-                    disabled={submitting}
                   >
-                    {submitting ? "Placing order…" : `Place order · ${formatPrice(totals.total)}`}
+                    {`Place order via WhatsApp · ${formatPrice(totals.total)}`}
                   </Button>
                   <Button
                     href={siteConfig.contact.whatsappUrl}

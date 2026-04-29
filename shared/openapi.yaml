@@ -1,0 +1,412 @@
+openapi: "3.1.0"
+info:
+  title: Delos Lounge & Dining API
+  version: "1.0.0"
+  description: |
+    Public + admin REST API for Delos Lounge & Dining.
+    Public endpoints accept bookings, orders and enquiries. Admin endpoints
+    require a JWT issued by POST /auth/login.
+
+servers:
+  - url: https://api.deloslounge.co.za
+    description: Production
+  - url: http://localhost:8080
+    description: Local
+
+security: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    OrderStatus:
+      type: string
+      enum: [received, accepted, preparing, ready, out_for_delivery, completed, cancelled]
+
+    FulfilmentType:
+      type: string
+      enum: [collection, delivery]
+
+    ReservationStatus:
+      type: string
+      enum: [pending, accepted, declined, contacted]
+
+    EnquiryStatus:
+      type: string
+      enum: [new, contacted, quoted, booked, declined]
+
+    CartItem:
+      type: object
+      required: [menuItemId, name, price, quantity]
+      properties:
+        menuItemId: { type: string }
+        name: { type: string }
+        price: { type: integer, description: "ZAR cents" }
+        quantity: { type: integer, minimum: 1, maximum: 50 }
+
+    Order:
+      type: object
+      properties:
+        id: { type: string, example: "ORD-AB3XY" }
+        customerName: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        fulfilmentType: { $ref: "#/components/schemas/FulfilmentType" }
+        deliveryAddress: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CartItem" }
+        orderNotes: { type: string }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        subtotal: { type: integer, description: "ZAR cents" }
+        serviceFee: { type: integer, description: "ZAR cents" }
+        deliveryFee: { type: integer, description: "ZAR cents" }
+        total: { type: integer, description: "ZAR cents" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Reservation:
+      type: object
+      properties:
+        id: { type: string, example: "RES-KZ9QP" }
+        name: { type: string }
+        phone: { type: string }
+        date: { type: string, format: date, example: "2026-05-15" }
+        time: { type: string, example: "19:00" }
+        guestCount: { type: integer, minimum: 1, maximum: 50 }
+        occasion: { type: string }
+        notes: { type: string }
+        status: { $ref: "#/components/schemas/ReservationStatus" }
+        adminNotes: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Enquiry:
+      type: object
+      properties:
+        id: { type: string, example: "ENQ-MN7RT" }
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        date: { type: string, format: date }
+        guestCount: { type: integer }
+        eventType: { type: string }
+        packageName: { type: string }
+        details: { type: string }
+        status: { $ref: "#/components/schemas/EnquiryStatus" }
+        adminNotes: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+        field: { type: string }
+
+paths:
+  /auth/login:
+    post:
+      summary: Admin login — returns JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "401":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /orders:
+    post:
+      summary: Place an order (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerName, phone, fulfilmentType, items]
+              properties:
+                customerName: { type: string }
+                phone: { type: string }
+                email: { type: string }
+                fulfilmentType: { $ref: "#/components/schemas/FulfilmentType" }
+                deliveryAddress: { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      menuItemId: { type: string }
+                      quantity: { type: integer }
+                orderNotes: { type: string }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: "#/components/schemas/Order" }
+        "400":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    get:
+      summary: List all orders (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { $ref: "#/components/schemas/OrderStatus" }
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+
+  /orders/{id}:
+    get:
+      summary: Get order by ID (public — ID is unguessable)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: "#/components/schemas/Order" }
+        "404":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      summary: Update order status (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: "#/components/schemas/OrderStatus" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: "#/components/schemas/Order" }
+        "400":
+          description: Invalid transition
+        "404":
+          description: Order not found
+
+  /reservations:
+    post:
+      summary: Create reservation (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, phone, date, time, guestCount]
+              properties:
+                name: { type: string }
+                phone: { type: string }
+                date: { type: string, format: date }
+                time: { type: string, example: "19:00" }
+                guestCount: { type: integer, minimum: 1, maximum: 50 }
+                occasion: { type: string }
+                notes: { type: string }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation: { $ref: "#/components/schemas/Reservation" }
+        "400":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    get:
+      summary: List reservations (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+                    items: { $ref: "#/components/schemas/Reservation" }
+
+  /reservations/{id}:
+    get:
+      summary: Get reservation by ID (public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation: { $ref: "#/components/schemas/Reservation" }
+        "404":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    patch:
+      summary: Update reservation status (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { $ref: "#/components/schemas/ReservationStatus" }
+                adminNotes: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation: { $ref: "#/components/schemas/Reservation" }
+
+  /enquiries:
+    post:
+      summary: Submit private function enquiry (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, phone, date, guestCount, eventType]
+              properties:
+                name: { type: string }
+                phone: { type: string }
+                email: { type: string }
+                date: { type: string, format: date }
+                guestCount: { type: integer, minimum: 1 }
+                eventType: { type: string }
+                packageName: { type: string }
+                details: { type: string }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enquiry: { $ref: "#/components/schemas/Enquiry" }
+    get:
+      summary: List enquiries (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { $ref: "#/components/schemas/EnquiryStatus" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enquiries:
+                    type: array
+                    items: { $ref: "#/components/schemas/Enquiry" }
+
+  /enquiries/{id}:
+    patch:
+      summary: Update enquiry status and admin notes (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { $ref: "#/components/schemas/EnquiryStatus" }
+                adminNotes: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enquiry: { $ref: "#/components/schemas/Enquiry" }
